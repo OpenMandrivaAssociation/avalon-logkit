@@ -4,7 +4,7 @@
 
 Name:           avalon-%{short_name}
 Version:        2.1
-Release:        %mkrel 2
+Release:        %mkrel 3
 Epoch:          0
 Summary:        Java logging toolkit
 License:        Apache License
@@ -28,8 +28,6 @@ BuildRequires:  jms
 BuildRequires:  jdbc-stdext
 %if %{gcj_support}
 BuildRequires:  java-gcj-compat-devel
-Requires(post): java-gcj-compat
-Requires(postun): java-gcj-compat
 %else
 BuildArch:      noarch
 %endif
