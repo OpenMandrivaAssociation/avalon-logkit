@@ -4,7 +4,7 @@
 
 Name:           avalon-%{short_name}
 Version:        2.1
-Release:        %mkrel 3
+Release:        %mkrel 4
 Epoch:          0
 Summary:        Java logging toolkit
 License:        Apache License
@@ -16,7 +16,7 @@ Requires:       avalon-framework >= 0:4.1.4
 Requires:       servlet
 Requires:       jms
 Requires:       jdbc-stdext
-BuildRequires:  jpackage-utils >= 0:1.5
+BuildRequires:  java-rpmbuild >= 0:1.5
 BuildRequires:  ant
 BuildRequires:  avalon-framework-javadoc
 BuildRequires:  javamail
