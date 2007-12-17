@@ -31,7 +31,6 @@ BuildRequires:  java-gcj-compat-devel
 %else
 BuildArch:      noarch
 %endif
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 LogKit is a logging toolkit designed for secure performance orientated
