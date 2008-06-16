@@ -4,7 +4,7 @@
 
 Name:           avalon-%{short_name}
 Version:        2.1
-Release:        %mkrel 6
+Release:        %mkrel 7
 Epoch:          0
 Summary:        Java logging toolkit
 License:        Apache License
