@@ -33,7 +33,7 @@
 
 Name:        avalon-%{short_name}
 Version:     2.1
-Release:     6
+Release:     7
 Summary:     Java logging toolkit
 License:     ASL 1.1
 Group:       Development/Java
@@ -41,13 +41,12 @@ URL:         http://avalon.apache.org/%{short_name}/
 Source0:     http://www.apache.org/dist/excalibur/%{name}/source/%{name}-%{version}-src.zip
 Source1:     http://repo1.maven.org/maven2/avalon-logkit/avalon-logkit/%{version}/%{name}-%{version}.pom
 Patch0:      fix-java6-compile.patch
+Patch1:      avalon-logkit-pom-deps.patch
+Patch2:      avalon-logkit-encoding.patch
+Patch3:      java7.patch
 Requires:    avalon-framework >= 0:4.1.4
-Requires:    servlet25
+Requires:    tomcat-servlet-3.0-api
 Requires:    jms
-Requires:    jdbc-stdext
-
-Requires(post):    jpackage-utils
-Requires(postun):  jpackage-utils
 
 BuildRequires:    jpackage-utils >= 0:1.5
 BuildRequires:    ant
@@ -57,9 +56,8 @@ BuildRequires:    log4j
 BuildRequires:    avalon-framework >= 0:4.1.4
 # Required for converting jars to OSGi bundles
 BuildRequires:    aqute-bndlib
-BuildRequires:    servlet25
+BuildRequires:    tomcat-servlet-3.0-api
 BuildRequires:    jms
-BuildRequires:    jdbc-stdext
 
 BuildArch:    noarch
 
@@ -81,54 +79,40 @@ Javadoc for %{name}.
 %setup -q
 %patch0
 
+cp %{SOURCE1} pom.xml
+%patch1
+%patch2 -p1
+%patch3
 # remove all binary libs
 find . -name "*.jar" -exec rm -f {} \;
 
 %build
-export CLASSPATH=%(build-classpath log4j javamail/mailapi jms tomcat6-servlet-2.5-api jdbc-stdext avalon-framework junit):$PWD/build/classes
-ant -Dnoget=true clean jar javadoc
+export CLASSPATH=%(build-classpath log4j javamail/mailapi jms servlet jdbc-stdext avalon-framework junit):$PWD/build/classes
+ant -Dencoding=ISO-8859-1 -Dnoget=true clean jar javadoc
 # Convert to OSGi bundle
-java -jar %{_javadir}/aqute-bndlib.jar wrap target/%{name}-%{version}.jar
+java -jar $(build-classpath aqute-bndlib) wrap target/%{name}-%{version}.jar
 
 %install
 # jars
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
-install -d -m 755 $RPM_BUILD_ROOT/%{_mavenpomdir}
+install -d -m 755 %{buildroot}%{_javadir}
+install -d -m 755 %{buildroot}/%{_mavenpomdir}
 
-install -m 644 target/%{name}-%{version}.bar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+install -m 644 target/%{name}-%{version}.bar %{buildroot}%{_javadir}/%{name}.jar
 
-install -pm 644 %{SOURCE1} $RPM_BUILD_ROOT/%{_mavenpomdir}/JPP-%{name}.pom
-%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
-
-# compatibility depmaps
-%add_to_maven_depmap %{short_name} %{short_name} %{version} JPP %{name}
-%add_to_maven_depmap org.apache.avalon.logkit %{name} %{version} JPP %{name}
+install -pm 644 pom.xml %{buildroot}/%{_mavenpomdir}/JPP-%{name}.pom
+%add_maven_depmap JPP-%{name}.pom %{name}.jar -a "%{short_name}:%{short_name},org.apache.avalon.logkit:%{name}"
 
 # javadoc
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr dist/docs/api/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-
-%pre javadoc
-# workaround for rpm bug, can be removed in F-17
-[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
-rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
-
+install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
+cp -pr dist/docs/api/* %{buildroot}%{_javadocdir}/%{name}
 
 %files
-%defattr(-,root,root,-)
 %doc LICENSE.txt NOTICE.txt
 %{_mavendepmapfragdir}/%{name}
 %{_mavenpomdir}/JPP-%{name}.pom
 %{_javadir}/%{name}.jar
 
 %files javadoc
-%defattr(-,root,root,-)
 %doc LICENSE.txt
 %{_javadocdir}/%{name}
 
