@@ -4,7 +4,7 @@
 
 Name:           avalon-%{short_name}
 Version:        2.1
-Release:        4
+Release:        5
 Epoch:          0
 Summary:        Java logging toolkit
 License:        Apache License
