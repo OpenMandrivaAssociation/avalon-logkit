@@ -34,7 +34,7 @@
 
 Name:        avalon-%{short_name}
 Version:     2.1
-Release:     13.1%{?dist}
+Release:     13.2
 Epoch:       0
 Summary:     Java logging toolkit
 License:     ASL 2.0
@@ -113,6 +113,7 @@ cp -pr dist/docs/api/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %{_mavendepmapfragdir}/%{name}
 %{_mavenpomdir}/JPP-%{name}.pom
 %{_javadir}/%{name}.jar
+%{_datadir}/maven-metadata/avalon-logkit.xml
 
 %files javadoc
 %doc LICENSE.txt NOTICE.txt
