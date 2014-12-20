@@ -34,11 +34,11 @@
 
 Name:        avalon-%{short_name}
 Version:     2.1
-Release:     13.2
+Release:     17.1
 Epoch:       0
 Summary:     Java logging toolkit
 License:     ASL 2.0
-
+Group:       Development/Java
 URL:         http://avalon.apache.org/%{short_name}/
 Source0:     http://archive.apache.org/dist/excalibur/%{name}/source/%{name}-%{version}-src.zip
 Source1:     http://repo1.maven.org/maven2/avalon-logkit/avalon-logkit/%{version}/%{name}-%{version}.pom
@@ -49,6 +49,7 @@ Patch3:      java7.patch
 Requires:    avalon-framework >= 0:4.1.4
 Requires:    tomcat-servlet-3.0-api
 Requires:    jms
+Requires:    javamail
 
 BuildRequires:    jpackage-utils >= 0:1.5
 BuildRequires:    ant
@@ -71,7 +72,7 @@ that you read the whitepaper and browse the API docs.
 
 %package javadoc
 Summary:    Javadoc for %{name}
-
+Group:        Documentation
 Requires:     jpackage-utils
 
 %description javadoc
@@ -87,6 +88,9 @@ cp %{SOURCE1} pom.xml
 %patch3
 # remove all binary libs
 find . -name "*.jar" -exec rm -f {} \;
+
+# LogFactor5 is no longer distributed with log4j
+rm -rf src/java/org/apache/log/output/lf5
 
 %build
 export CLASSPATH=$(build-classpath log4j javamail/mailapi jms servlet jdbc-stdext avalon-framework junit):$PWD/build/classes
@@ -108,18 +112,26 @@ install -pm 644 pom.xml $RPM_BUILD_ROOT/%{_mavenpomdir}/JPP-%{name}.pom
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 cp -pr dist/docs/api/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
-%files
+%files -f .mfiles
 %doc LICENSE.txt NOTICE.txt
-%{_mavendepmapfragdir}/%{name}
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_javadir}/%{name}.jar
-%{_datadir}/maven-metadata/avalon-logkit.xml
 
 %files javadoc
 %doc LICENSE.txt NOTICE.txt
 %{_javadocdir}/%{name}
 
 %changelog
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:2.1-17
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Wed May 21 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 0:2.1-16
+- Use .mfiles generated during build
+
+* Tue May 13 2014 Michael Simacek <msimacek@redhat.com> - 0:2.1-15
+- Disable LogFactor5 which is no longer available
+
+* Mon Mar 17 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 0:2.1-14
+- Add missing requires on javamail
+
 * Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:2.1-13
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
@@ -255,3 +267,4 @@ cp -pr dist/docs/api/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
 * Mon Sep 10 2001 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.0-0.b4.1mdk
 - first Mandrake release
+
