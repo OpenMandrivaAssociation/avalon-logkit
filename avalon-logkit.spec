@@ -34,7 +34,7 @@
 
 Name:        avalon-%{short_name}
 Version:     2.1
-Release:     17.2
+Release:     17.3
 Epoch:       0
 Summary:     Java logging toolkit
 License:     ASL 2.0
