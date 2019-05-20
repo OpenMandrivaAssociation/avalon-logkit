@@ -1,0 +1,17 @@
+diff -up avalon-logkit-2.2.1/org/apache/log/output/db/DefaultDataSource.java.omv~ avalon-logkit-2.2.1/org/apache/log/output/db/DefaultDataSource.java
+--- avalon-logkit-2.2.1/org/apache/log/output/db/DefaultDataSource.java.omv~	2019-05-20 15:05:31.832588841 +0200
++++ avalon-logkit-2.2.1/org/apache/log/output/db/DefaultDataSource.java	2019-05-20 15:05:50.491373504 +0200
+@@ -113,4 +113,13 @@ public class DefaultDataSource
+     {
+         m_logWriter = logWriter;
+     }
++
++    public boolean isWrapperFor(Class<?> iface) {
++        return false;
++    }
++
++    public <T> T unwrap(java.lang.Class<T> iface) {return null;}
++
++
++    public java.util.logging.Logger getParentLogger() {return null;}
+ }
