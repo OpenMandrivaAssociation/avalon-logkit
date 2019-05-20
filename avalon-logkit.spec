@@ -38,6 +38,7 @@ Javadoc for %{name}.
 %autosetup -p1 -c %{name}-%{version}
 
 %build
+export LANG=en_US.utf-8
 . %{_sysconfdir}/profile.d/90java.sh
 
 buildjar() {
