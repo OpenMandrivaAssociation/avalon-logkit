@@ -7,7 +7,7 @@ Release:     2
 Summary:     Java logging toolkit
 License:     ASL 2.0
 Group:       Development/Java
-URL:         http://avalon.apache.org/%{short_name}/
+URL:         https://avalon.apache.org/%{short_name}/
 Source0:     https://repo1.maven.org/maven2/org/apache/avalon/logkit/avalon-logkit/%{version}/avalon-logkit-%{version}-sources.jar
 Source1:     https://repo1.maven.org/maven2/org/apache/avalon/logkit/avalon-logkit/%{version}/avalon-logkit-%{version}.pom
 Patch0:		logkit-2.2.1-compile.patch
