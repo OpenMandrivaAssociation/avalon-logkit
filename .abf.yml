@@ -1,3 +1,5 @@
 sources:
+  avalon-logkit-2.2.1.tar.gz: 7043ed96fc5a83626f78c119b3b0f6da11bc448b
+removed_sources:
   avalon-logkit-2.2.1-sources.jar: 540bb09703c398525f56a6562ca8c6b4755877e0
   avalon-logkit-2.2.1.pom: 77a93e1630dd44ae745b03e9e0e4f04209514c04

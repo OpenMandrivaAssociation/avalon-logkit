@@ -1,83 +1,125 @@
-%global     short_name      logkit
-%global     camelcase_short_name      LogKit
-
-Name:        avalon-%{short_name}
-Version:     2.2.1
-Release:     2
-Summary:     Java logging toolkit
-License:     ASL 2.0
-Group:       Development/Java
-URL:         https://avalon.apache.org/%{short_name}/
-Source0:     https://repo1.maven.org/maven2/org/apache/avalon/logkit/avalon-logkit/%{version}/avalon-logkit-%{version}-sources.jar
-Source1:     https://repo1.maven.org/maven2/org/apache/avalon/logkit/avalon-logkit/%{version}/avalon-logkit-%{version}.pom
+Name:		avalon-logkit
+Version:	2.2.1
+Release:	2
+Summary:	Java logging toolkit
+Group:		Development/Java
+License:	Apache-2.0
+URL:		https://avalon.apache.org/logkit/
+# Java sources from the 2.2.1 sources jar, repacked so the lookaside
+# archive is not a jar. FreeMarker looks up both jar filenames.
+Source0:	avalon-logkit-%{version}.tar.gz
 Patch0:		logkit-2.2.1-compile.patch
-BuildRequires:	jdk-current
-BuildRequires:	javapackages-local
+
+BuildArch:	noarch
+BuildRequires:	java-current-devel
+BuildRequires:	sysjar
+BuildRequires:	javapackages-filesystem
 BuildRequires:	jmod(java.jms)
 BuildRequires:	jmod(javax.servlet)
 BuildRequires:	jmod(java.mail)
 BuildRequires:	jmod(org.apache.log4j.v12)
 
-BuildArch:    noarch
-
-
 %description
-LogKit is a logging toolkit designed for secure performance orientated
-logging in applications. To get started using LogKit, it is recomended
-that you read the whitepaper and browse the API docs.
-
-%package javadoc
-Summary:    Javadoc for %{name}
-Group:        Documentation
-Requires:     jpackage-utils
-
-%description javadoc
-Javadoc for %{name}.
+LogKit %{version} is the logging toolkit FreeMarker compiles against.
+The same classes are installed as avalon-logkit.jar and org.apache.log.jar.
+DefaultDataSource implements the JDBC 4 methods of javax.sql.DataSource.
 
 %prep
-%autosetup -p1 -c %{name}-%{version}
+%autosetup -n avalon-logkit-%{version} -p1
+find . -type f \( -name '*.jar' -o -name '*.class' -o -name '*.so' -o -name '*.node' -o -name '*.wasm' \) -print > binaries.list
+find . -type d -name '*.jar' -print >> binaries.list
+if [ -s binaries.list ]; then
+	cat binaries.list
+	exit 1
+fi
 
 %build
-export LANG=en_US.utf-8
-. %{_sysconfdir}/profile.d/90java.sh
+set -eo pipefail
+export JAVA_HOME=%{_jvmdir}/java-openjdk
+export PATH="$JAVA_HOME/bin:$PATH"
+find . -name '*.java' > sources.list
+test "$(wc -l < sources.list)" -eq 61
+mkdir -p classes
+CP=%{_javadir}/javax.servlet.jar:%{_javadir}/java.mail.jar:%{_javadir}/javax.jms-api.jar:%{_javadir}/log4j.jar
+javac --release 8 -encoding UTF-8 -Xlint:-options,-removal -proc:none \
+	-cp "$CP" -d classes @sources.list
+echo 'Automatic-Module-Name: org.apache.log' > avalon-logkit.mf
+jar cfm avalon-logkit.jar avalon-logkit.mf -C classes .
+jar i avalon-logkit.jar
+javap -v -classpath avalon-logkit.jar org.apache.log.Logger | grep -F -q 'major version: 52'
+desc=$(jar --describe-module --file avalon-logkit.jar)
+printf '%s\n' "$desc" | grep -F -q 'org.apache.log'
+if printf '%s\n' "$desc" | grep -F -q 'Unable'; then
+	exit 1
+fi
 
-buildjar() {
-	if ! [ -e module-info.java ]; then
-		MODULE="$1"
-		shift
-		echo "module $MODULE {" >module-info.java
-		find . -name "*.java" |xargs grep ^package |sed -e 's,^.*package ,,;s,\;.*,,' -e 's/^[[:space:]]*//g' -e 's/[[:space:]]*\$//g' |sort |uniq |while read e; do
-			echo "  exports $e;" >>module-info.java
-		done
-		for i in "$@"; do
-			echo "	requires $i;" >>module-info.java
-		done
-		echo '}' >>module-info.java
-	fi
-	find . -name "*.java" |xargs javac -p %{_javadir}/modules
-	find . -name "*.class" -o -name "*.properties" |xargs jar cf $MODULE-%{version}.jar
-	jar i $MODULE-%{version}.jar
-	# Javadoc for javax.servlet is broken and in need of compile
-	# fixes
-	javadoc -d docs -p %{_javadir}/modules -sourcepath . $MODULE
-}
-
-buildjar org.apache.log java.jms javax.servlet java.mail org.apache.log4j.v12 java.sql
+cat > avalon-logkit.pom << END
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.avalon.logkit</groupId>
+  <artifactId>avalon-logkit</artifactId>
+  <version>%{version}</version>
+  <name>Avalon LogKit</name>
+  <description>Logging toolkit used by FreeMarker.</description>
+  <url>https://avalon.apache.org/logkit/</url>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+</project>
+END
 
 %install
-mkdir -p %{buildroot}%{_javadir}/modules %{buildroot}%{_mavenpomdir} %{buildroot}%{_javadocdir}
-cp org.apache.log-%{version}.jar %{buildroot}%{_javadir}/modules
-ln -s modules/org.apache.log-%{version}.jar %{buildroot}%{_javadir}/
-ln -s modules/org.apache.log-%{version}.jar %{buildroot}%{_javadir}/org.apache.log.jar
-ln -s modules/org.apache.log-%{version}.jar %{buildroot}%{_javadir}/avalon-logkit.jar
-ln -s modules/org.apache.log-%{version}.jar %{buildroot}%{_javadir}/avalon-logkit-%{version}.jar
-cp %{S:1} %{buildroot}%{_mavenpomdir}/
-%add_maven_depmap avalon-logkit-%{version}.pom org.apache.log-%{version}.jar
-mv docs %{buildroot}%{_javadocdir}/%{name}
+sysjar install --buildroot %{buildroot} \
+	--artifact avalon-logkit.pom:avalon-logkit.jar \
+	--file-name avalon-logkit \
+	--link org.apache.log \
+	--filelist .mfiles
+
+%check
+set -eo pipefail
+export JAVA_HOME=%{_jvmdir}/java-openjdk
+export PATH="$JAVA_HOME/bin:$PATH"
+test -s %{buildroot}%{_javadir}/avalon-logkit.jar
+test -L %{buildroot}%{_javadir}/org.apache.log.jar
+mkdir -p check
+cat > check/Smoke.java << 'EOF'
+import java.io.StringWriter;
+
+import org.apache.log.Hierarchy;
+import org.apache.log.LogTarget;
+import org.apache.log.Logger;
+import org.apache.log.Priority;
+import org.apache.log.format.RawFormatter;
+import org.apache.log.output.io.WriterTarget;
+
+public class Smoke {
+	public static void main(String[] args) {
+		StringWriter writer = new StringWriter();
+		WriterTarget target = new WriterTarget(writer, new RawFormatter());
+		Hierarchy hierarchy = new Hierarchy();
+		Logger log = hierarchy.getLoggerFor(args[1]);
+		log.setAdditivity(false);
+		log.setPriority(Priority.INFO);
+		log.setLogTargets(new LogTarget[] { target });
+		log.info(args[0]);
+		String text = writer.toString();
+		if (!text.equals(args[0])) {
+			throw new AssertionError(text);
+		}
+		System.out.println(args[0] + " " + args[1] + " " + text);
+	}
+}
+EOF
+JAR=%{buildroot}%{_javadir}/avalon-logkit.jar
+javac --release 8 -encoding UTF-8 -proc:none -cp "$JAR" -d check check/Smoke.java
+java -cp "check:$JAR" Smoke avalon_ok gradle > check/out.txt
+cat check/out.txt
+grep -F -q 'avalon_ok gradle avalon_ok' check/out.txt
 
 %files -f .mfiles
-%{_javadir}/*.jar
-%{_javadir}/modules/*.jar
-
-%files javadoc
-%{_javadocdir}/%{name}
+%license LICENSE
